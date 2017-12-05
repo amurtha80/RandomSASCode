@@ -11,6 +11,9 @@ OPTIONS SOURCE NOTES MLOGIC MPRINT SYMBOLGEN;
 %let rdate=%sysfunc(putn(&dte,mmddyyn6.));
 %put &rdate.;
 
+/*Return last day of prior month based off current date*/
+%let mnthend = %eval(%sysfunc(today() - %sysfunc(day(%sysfunc(today()))));
+
 /* -------------------------------------------------------------------
    Find the last calendar day of the current and prior month
    ------------------------------------------------------------------- */
