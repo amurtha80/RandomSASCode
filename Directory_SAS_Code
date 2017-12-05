@@ -1,0 +1,15 @@
+/*Random SAS Code I have created or collected over time related to files and directories*/
+
+/*Checks to see if directory for results dataset exists. If not, 
+  then create the new directory. Used in a UNIX environment.*/
+%LET proj1=Your_Project_Folder_Name;
+%LOCAL rc fileref; 
+%LET rc = %SYSFUNC(filename(fileref,"/Your/Target/Project/Directory/&proj1/")) ;
+%IF %SYSFUNC(fexist(&fileref))  
+  %THEN 
+  %PUT "NOTE: The directory "/Cisadhoc/CRE_Prod_Output/&proj1" exists" ; 
+%ELSE 
+  %DO;  
+	  x mkdir "/Your/Target/Project/Directory/&proj1/";
+    %PUT %SYSFUNC(sysmsg()) The directory has been created.; 
+%END;
