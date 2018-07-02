@@ -1,0 +1,67 @@
+/* ******************** Part I - Generate and send summary file ******************** */
+
+/*Note: Please only change the macro input in the last line of this session.
+	Once the input is changed to the user information, run the whole session and the user 
+	will receive an email with txt summary file*/
+
+/*Get the run date and convert the format*/
+data _null_;
+call symput('date',left(put(today(),YYMMDDn8.)));
+run;
+
+/*Define macro to run UNIX commands*/
+%macro file_summary(userid,email);
+/*create txt file*/
+x "find /parent_dir/ -user &userid. -type f | xargs du -ch | sort -rh > /parent_dir/File_Management/Temp_File_Summary_&userid._&date..txt";
+/*sent the txt file as attachment to user*/
+x "Mail -s 'SAS server file Summary for User &userid. - &date.' -a /parent_dir/File_Management/Temp_File_Summary_&userid._&date..txt  &email.@company.com";
+/*delete txt file on the grid*/
+x "rm /parent_dir/File_Management/Temp_File_Summary_&userid._&date..txt";
+%mend file_summary;
+
+/*Call macro to get a summary of files for the user*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+%file_summary(userid = xyz123, email=bob.smith);
+/*'email' should be the part before @ in your email address*/
+/*Example: %file_summary(userid = xyz123, email=bob.smith);*/ 
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+/* ******************** Part II - Delete files ******************** */
+
+/*Note: Please copy the whole line from the txt file to the datalines, including the 
+	file size and the file name with path. The delimiter should be tab, which is 
+	default in the txt file generated. Other part of the code should not be changed.
+	Once all the files the user wants to deleted are included, run the whole session; 
+	then the files will be removed from the grid. Removal can be confirmed by 
+	rerunning part I.*/
+
+/*Define list of ready-to-delete files*/
+data work.delete_list;
+infile datalines dsd delimiter='09'x missover;	/* Tab delimited*/
+length file $250;
+input size $ file $;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+datalines;
+Copy your text here
+;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+run;
+
+/*Define macro variables to prepare for deleting the files*/
+data _null_;
+set work.delete_list end=last;
+call symput('path'||left(_N_),file);
+if last then call symput('n',left(_N_));
+run;
+
+/*remove files*/
+%macro rm();
+%do i=1 %to &n.;
+	x "rm &&path&i";
+%end;
+%mend rm;
+%rm;
